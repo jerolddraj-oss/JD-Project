@@ -1,0 +1,10 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<h2>Send message</h2>
+<form method="post" action="/dashboard/send">
+  <label>To (E.164 without plus): <input type="text" name="to" required /></label><br/>
+  <label>Message:<br/><textarea name="text" rows="4" cols="60"></textarea></label><br/>
+  <label>Preview URL: <input type="checkbox" name="preview_url" value="1" /></label><br/>
+  <button type="submit">Send</button>
+</form>
+{% endblock %}
