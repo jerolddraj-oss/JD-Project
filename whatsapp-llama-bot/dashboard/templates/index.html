@@ -1,0 +1,13 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<h2>Dashboard</h2>
+<p>Webhook: <strong id="status">active</strong></p>
+<h3>Recent messages</h3>
+<ul>
+  {% for m in messages %}
+    <li><a href="/dashboard/message/{{ m.id }}">{{ m.id }}</a> — {{ m.direction }} — {{ m.text[:80] }}</li>
+  {% else %}
+    <li>No messages yet</li>
+  {% endfor %}
+</ul>
+{% endblock %}

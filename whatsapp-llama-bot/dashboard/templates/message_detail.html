@@ -1,0 +1,11 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<h2>Message {{ message.id }}</h2>
+<dl>
+  <dt>From</dt><dd>{{ message.from }}</dd>
+  <dt>To</dt><dd>{{ message.to }}</dd>
+  <dt>Direction</dt><dd>{{ message.direction }}</dd>
+  <dt>Text</dt><dd><pre>{{ message.text }}</pre></dd>
+</dl>
+<a href="/dashboard">Back</a>
+{% endblock %}
