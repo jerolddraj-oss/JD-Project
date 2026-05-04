@@ -50,9 +50,9 @@ module "vnet_peering" {
 
 # NETWORK SECURITY
 module "network_security" {
-  source            = "./modules/network-security"
-  rg                = azurerm_resource_group.main.name
-  location          = var.location
+  source             = "./modules/network-security"
+  rg                 = azurerm_resource_group.main.name
+  location           = var.location
   firewall_subnet_id = module.hub.firewall_subnet_id
   public_ip_id       = module.hub.public_ip_id
 }
@@ -70,6 +70,7 @@ module "dns" {
   source       = "./modules/dns"
   rg           = azurerm_resource_group.main.name
   hub_vnet_id  = module.hub.vnet_id
+  location     = var.location
 }
 
 # AKS
