@@ -4,7 +4,7 @@ resource "azurerm_virtual_network_peering" "hub_to_spoke" {
   name                      = "hub-to-${each.key}"
   resource_group_name       = var.resource_group_name
   virtual_network_name      = var.hub_vnet_name
-   remote_virtual_network_id = each.value.id
+  remote_virtual_network_id = each.value.id
 
   allow_virtual_network_access = true
   allow_forwarded_traffic      = true
