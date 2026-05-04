@@ -1,4 +1,4 @@
-# Root Orchestration - Fixed for module compatibility
+# Root Orchestration - Fixed with required module inputs
 
 resource "azurerm_resource_group" "main" {
   name     = "jd-rg"
@@ -7,58 +7,72 @@ resource "azurerm_resource_group" "main" {
 
 # HUB
 module "hub" {
-  source = "./modules/hub"
+  source   = "./modules/hub"
+  rg       = azurerm_resource_group.main.name
+  location = var.location
 }
 
 # SPOKES
 module "spoke1" {
-  source = "./modules/spoke"
+  source   = "./modules/spoke"
+  name     = "spoke-east"
+  location = var.location
 }
 
 module "spoke2" {
-  source = "./modules/spoke"
+  source   = "./modules/spoke"
+  name     = "spoke-west"
+  location = var.location
 }
 
 module "spoke3" {
-  source = "./modules/spoke"
+  source   = "./modules/spoke"
+  name     = "spoke-central"
+  location = var.location
 }
 
 # VNET PEERING
 module "vnet_peering" {
-  source = "./modules/vnet-peering"
+  source              = "./modules/vnet-peering"
+  resource_group_name = azurerm_resource_group.main.name
+  hub_vnet_id         = module.hub.vnet_id
+  hub_vnet_name       = module.hub.vnet_name
 
-  depends_on = [
-    module.hub,
-    module.spoke1,
-    module.spoke2,
-    module.spoke3
-  ]
+  spokes = {
+    spoke1 = module.spoke1.vnet_id
+    spoke2 = module.spoke2.vnet_id
+    spoke3 = module.spoke3.vnet_id
+  }
 }
 
 # NETWORK SECURITY
 module "network_security" {
-  source = "./modules/network-security"
-
-  depends_on = [module.hub]
+  source            = "./modules/network-security"
+  rg                = azurerm_resource_group.main.name
+  location          = var.location
+  firewall_subnet_id = module.hub.firewall_subnet_id
+  public_ip_id       = module.hub.public_ip_id
 }
 
 # FIREWALL RULES
 module "security" {
-  source = "./modules/security"
-
-  depends_on = [module.network_security]
+  source    = "./modules/security"
+  rg        = azurerm_resource_group.main.name
+  location  = var.location
+  sp_secret = "dummy-secret"
 }
 
 # DNS
 module "dns" {
-  source = "./modules/dns"
-
-  depends_on = [module.hub]
+  source       = "./modules/dns"
+  rg           = azurerm_resource_group.main.name
+  hub_vnet_id  = module.hub.vnet_id
 }
 
 # AKS
 module "aks" {
-  source = "./modules/aks"
-
-  depends_on = [module.spoke1]
+  source   = "./modules/aks"
+  name     = "aks-cluster"
+  location = var.location
+  rg       = azurerm_resource_group.main.name
 }
