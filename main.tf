@@ -64,6 +64,7 @@ module "network_security" {
   location           = var.location
   firewall_subnet_id = module.hub.firewall_subnet_id
   public_ip_id       = module.hub.public_ip_id
+  hub_vnet_id        = module.hub.vnet_id
 }
 
 # FIREWALL RULES
