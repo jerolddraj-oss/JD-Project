@@ -42,9 +42,17 @@ module "vnet_peering" {
   hub_vnet_name       = module.hub.vnet_name
 
   spokes = {
-    spoke1 = module.spoke1.vnet_id
-    spoke2 = module.spoke2.vnet_id
-    spoke3 = module.spoke3.vnet_id
+  spoke1 = {
+    id   = module.spoke1.vnet_id
+    name = module.spoke1.vnet_name
+  }
+  spoke2 = {
+    id   = module.spoke2.vnet_id
+    name = module.spoke2.vnet_name
+  }
+  spoke3 = {
+    id   = module.spoke3.vnet_id
+    name = module.spoke3.vnet_name
   }
 }
 
