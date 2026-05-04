@@ -142,7 +142,6 @@ jobs:
     if: github.ref == 'refs/heads/main'
     environment:
       name: production
-      # Using a protected environment in GitHub will require manual approval before this job runs.
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -182,7 +181,6 @@ jobs:
 
       - name: Terraform Apply
         run: |
-          # The environment protection rules will enforce manual approval if configured.
           terraform -chdir=${{ env.TERRAFORM_WORKING_DIR }} apply -input=false tfplan
 
       - name: Configure kubectl for AKS
