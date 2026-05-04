@@ -1,0 +1,9 @@
+server:
+  service:
+    type: ClusterIP
+alertmanager:
+  enabled: true
+kubeStateMetrics:
+  enabled: true
+nodeExporter:
+  enabled: true

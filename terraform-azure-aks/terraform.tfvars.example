@@ -1,0 +1,4 @@
+location            = "eastus"
+resource_group_name = "rg-aks-hubspoke"
+vmss_ssh_public_key = "ssh-rsa AAAA..."
+app_secret_value    = "replace-me"
