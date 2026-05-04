@@ -1,7 +1,2 @@
-variable "rg" {
-  type = string
-}
-
-variable "location" {
-  type = string
-}
+variable "rg" {}
+variable "location" {}
