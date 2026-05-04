@@ -1,0 +1,23 @@
+replicaCount: 1
+persistence:
+  enabled: true
+  size: 10Gi
+adminUser: admin
+adminPassword: "REPLACE_WITH_SECURE_PASSWORD"
+service:
+  type: ClusterIP
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+      - name: Prometheus
+        type: prometheus
+        url: http://prometheus-server.monitoring.svc.cluster.local
+        access: proxy
+        isDefault: true
+dashboards:
+  default:
+    aks-cluster:
+      gnetId: null
+      overwrite: true
+      file: /var/lib/grafana/dashboards/aks-cluster.json
