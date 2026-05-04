@@ -9,6 +9,11 @@ permissions:
   id-token: write
   contents: read
 
+# 🔥 FIX: prevent parallel runs (root cause of lock issue)
+concurrency:
+  group: terraform-jd-project
+  cancel-in-progress: true
+
 jobs:
   terraform:
     runs-on: ubuntu-latest
@@ -20,7 +25,7 @@ jobs:
     - name: Setup Terraform
       uses: hashicorp/setup-terraform@v3
 
-    # 🔥 FIX: Always clean Terraform cache
+    # 🔥 Always clean Terraform cache
     - name: Clean Terraform Cache
       run: rm -rf .terraform .terraform.lock.hcl
 
@@ -31,20 +36,14 @@ jobs:
         tenant-id: ${{ secrets.AZURE_TENANT_ID }}
         subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-    # 🔥 FIX: Force module refresh
     - name: Terraform Init
-      run: terraform init -upgrade
+      run: terraform init -upgrade -reconfigure
 
-    # ✅ Auto-format all Terraform files
     - name: Terraform Format
       run: terraform fmt -recursive
 
-    # ✅ Then verify formatting
     - name: Terraform Format Check
       run: terraform fmt -check -recursive
-      
-    - name: Force Unlock (safe fallback)
-      run: terraform force-unlock -force f36ba63f-0a5a-a1c7-27ab-95f9098dd8d0 || true
 
     - name: Terraform Validate
       run: terraform validate
