@@ -71,6 +71,7 @@ module "dns" {
   source      = "./modules/dns"
   rg          = azurerm_resource_group.main.name
   hub_vnet_id = module.hub.vnet_id
+  location    = var.location
 }
 
 # AKS
