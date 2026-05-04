@@ -10,6 +10,11 @@ resource "azurerm_firewall" "fw" {
     subnet_id            = var.firewall_subnet_id
     public_ip_address_id = var.public_ip_id
   }
+
+  depends_on = [
+    var.firewall_subnet_id,
+    var.public_ip_id
+  ]
 }
 
 resource "azurerm_route_table" "rt" {
