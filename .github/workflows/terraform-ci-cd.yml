@@ -25,53 +25,23 @@ jobs:
       - name: Check required secrets
         id: check
         run: |
-          # Prefer single AZURE_CREDENTIALS secret (sdk-auth JSON). If present, succeed.
           if [ -n "${{ secrets.AZURE_CREDENTIALS }}" ]; then
             echo "creds_present=true" >> $GITHUB_OUTPUT
-            echo "Found AZURE_CREDENTIALS secret."
             exit 0
           fi
-
-          # If AZURE_CREDENTIALS not present, ensure individual secrets are set
           missing=false
-
-          if [ -z "${{ secrets.AZURE_CLIENT_ID }}" ]; then
-            echo "Missing secret: AZURE_CLIENT_ID" >&2
-            missing=true
-          fi
-          if [ -z "${{ secrets.AZURE_TENANT_ID }}" ]; then
-            echo "Missing secret: AZURE_TENANT_ID" >&2
-            missing=true
-          fi
-          if [ -z "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ]; then
-            echo "Missing secret: AZURE_SUBSCRIPTION_ID" >&2
-            missing=true
-          fi
-          # AZURE_CLIENT_SECRET is optional if using OIDC/federated credential
-          if [ -z "${{ secrets.BACKEND_RG }}" ]; then
-            echo "Missing secret: BACKEND_RG" >&2
-            missing=true
-          fi
-          if [ -z "${{ secrets.BACKEND_STORAGE_ACCOUNT }}" ]; then
-            echo "Missing secret: BACKEND_STORAGE_ACCOUNT" >&2
-            missing=true
-          fi
-          if [ -z "${{ secrets.BACKEND_CONTAINER }}" ]; then
-            echo "Missing secret: BACKEND_CONTAINER" >&2
-            missing=true
-          fi
-          if [ -z "${{ secrets.BACKEND_KEY }}" ]; then
-            echo "Missing secret: BACKEND_KEY" >&2
-            missing=true
-          fi
-
+          if [ -z "${{ secrets.AZURE_CLIENT_ID }}" ]; then missing=true; fi
+          if [ -z "${{ secrets.AZURE_TENANT_ID }}" ]; then missing=true; fi
+          if [ -z "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ]; then missing=true; fi
+          if [ -z "${{ secrets.BACKEND_RG }}" ]; then missing=true; fi
+          if [ -z "${{ secrets.BACKEND_STORAGE_ACCOUNT }}" ]; then missing=true; fi
+          if [ -z "${{ secrets.BACKEND_CONTAINER }}" ]; then missing=true; fi
+          if [ -z "${{ secrets.BACKEND_KEY }}" ]; then missing=true; fi
           if [ "$missing" = true ]; then
             echo "creds_present=false" >> $GITHUB_OUTPUT
-            echo "One or more required secrets are missing. Set AZURE_CREDENTIALS or required individual secrets." >&2
             exit 1
           else
             echo "creds_present=true" >> $GITHUB_OUTPUT
-            echo "All required secrets are present."
           fi
 
   terraform-plan:
@@ -89,8 +59,6 @@ jobs:
         uses: hashicorp/setup-terraform@v2
         with:
           terraform_version: ${{ env.TF_VERSION }}
-
-      
 
       - name: Terraform Init
         run: |
