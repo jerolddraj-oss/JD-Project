@@ -251,22 +251,8 @@ resource "azurerm_monitor_diagnostic_setting" "firewall_diag" {
   }
 }
 
-# Outputs aggregated at root
-output "vmss_a_public_ip" {
-  value = module.vmss_a.public_ip
-}
-
-output "vmss_b_public_ip" {
-  value = module.vmss_b.public_ip
-}
-
-output "traffic_manager_fqdn" {
-  value = module.traffic_manager.fqdn
-}
-
-output "key_vault_uri" {
-  value = module.key_vault.vault_uri
-}
+# Note: Outputs for VMSS public IPs, Traffic Manager FQDN, and Key Vault URI
+# should be declared in outputs.tf (root) to avoid duplicate definitions.
 
 output "aks_kubeconfig_instructions" {
   value = "Use az aks get-credentials --resource-group ${azurerm_resource_group.main.name} --name ${module.aks.cluster_name} to configure kubectl"
