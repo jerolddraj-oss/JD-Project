@@ -34,7 +34,7 @@ module "spoke3" {
   rg       = azurerm_resource_group.main.name
 }
 
-# VNET PEERING (map(string) only)
+# VNET PEERING
 module "vnet_peering" {
   source              = "./modules/vnet-peering"
   resource_group_name = azurerm_resource_group.main.name
@@ -42,17 +42,18 @@ module "vnet_peering" {
   hub_vnet_name       = module.hub.vnet_name
 
   spokes = {
-  spoke1 = {
-    id   = module.spoke1.vnet_id
-    name = module.spoke1.vnet_name
-  }
-  spoke2 = {
-    id   = module.spoke2.vnet_id
-    name = module.spoke2.vnet_name
-  }
-  spoke3 = {
-    id   = module.spoke3.vnet_id
-    name = module.spoke3.vnet_name
+    spoke1 = {
+      id   = module.spoke1.vnet_id
+      name = module.spoke1.vnet_name
+    }
+    spoke2 = {
+      id   = module.spoke2.vnet_id
+      name = module.spoke2.vnet_name
+    }
+    spoke3 = {
+      id   = module.spoke3.vnet_id
+      name = module.spoke3.vnet_name
+    }
   }
 }
 
