@@ -1,180 +1,46 @@
-name: Terraform CI/CD
+name: Terraform Deploy
 
 on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
-  workflow_dispatch: {}
-
-env:
-  TF_VERSION: '1.5.0'
-  TERRAFORM_WORKING_DIR: '.'    # change if Terraform root is in a subfolder
-
-permissions:
-  contents: read
-  id-token: write
 
 jobs:
-  validate-secrets:
-    name: Validate Azure and Backend Secrets
+  terraform:
     runs-on: ubuntu-latest
-    outputs:
-      creds_present: ${{ steps.check.outputs.creds_present }}
+
     steps:
-      - name: Check required secrets
-        id: check
-        run: |
-          if [ -n "${{ secrets.AZURE_CREDENTIALS }}" ]; then
-            echo "creds_present=true" >> $GITHUB_OUTPUT
-            exit 0
-          fi
-          missing=false
-          if [ -z "${{ secrets.AZURE_CLIENT_ID }}" ]; then missing=true; fi
-          if [ -z "${{ secrets.AZURE_TENANT_ID }}" ]; then missing=true; fi
-          if [ -z "${{ secrets.AZURE_SUBSCRIPTION_ID }}" ]; then missing=true; fi
-          if [ -z "${{ secrets.BACKEND_RG }}" ]; then missing=true; fi
-          if [ -z "${{ secrets.BACKEND_STORAGE_ACCOUNT }}" ]; then missing=true; fi
-          if [ -z "${{ secrets.BACKEND_CONTAINER }}" ]; then missing=true; fi
-          if [ -z "${{ secrets.BACKEND_KEY }}" ]; then missing=true; fi
-          if [ "$missing" = true ]; then
-            echo "creds_present=false" >> $GITHUB_OUTPUT
-            exit 1
-          else
-            echo "creds_present=true" >> $GITHUB_OUTPUT
-          fi
+    - name: Checkout
+      uses: actions/checkout@v3
 
-  terraform-plan:
-    name: Terraform Init and Plan
-    runs-on: ubuntu-latest
-    needs: validate-secrets
-    if: needs.validate-secrets.outputs.creds_present == 'true'
-    env:
-      TF_IN_AUTOMATION: "true"
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: ${{ env.TF_VERSION }}
+    - name: Terraform Init
+      run: terraform init
 
-      - name: Terraform Init
-        run: |
-          terraform -chdir=${{ env.TERRAFORM_WORKING_DIR }} init \
-            -backend-config="resource_group_name=${{ secrets.BACKEND_RG }}" \
-            -backend-config="storage_account_name=${{ secrets.BACKEND_STORAGE_ACCOUNT }}" \
-            -backend-config="container_name=${{ secrets.BACKEND_CONTAINER }}" \
-            -backend-config="key=${{ secrets.BACKEND_KEY }}"
+    - name: Terraform Validate
+      run: terraform validate
 
-      - name: Terraform Validate
-        run: terraform -chdir=${{ env.TERRAFORM_WORKING_DIR }} validate
+    - name: Terraform Plan
+      run: terraform plan
 
-      - name: Terraform Plan
-        id: plan
-        run: |
-          terraform -chdir=${{ env.TERRAFORM_WORKING_DIR }} plan -out=tfplan -input=false
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/main'
+      run: terraform apply -auto-approve
 
-      - name: Save plan artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: tfplan
-          path: tfplan
+    - name: AKS Login
+      run: az aks get-credentials --resource-group $RG --name aks-cluster
 
-  terraform-apply:
-    name: Terraform Apply and Post Deploy
-    runs-on: ubuntu-latest
-    needs: terraform-plan
-    if: github.ref == 'refs/heads/main'
-    environment:
-      name: production
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+    - name: Install Helm
+      uses: azure/setup-helm@v3
 
-      - name: Download plan artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: tfplan
-          path: .
+    - name: Deploy Prometheus
+      run: |
+        helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+        helm install prometheus prometheus-community/prometheus
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v2
-        with:
-          terraform_version: ${{ env.TF_VERSION }}
-
-      - name: Azure Login (using AZURE_CREDENTIALS)
-        if: ${{ secrets.AZURE_CREDENTIALS != '' }}
-        uses: azure/login@v1
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-
-      - name: Azure Login (using individual secrets / OIDC)
-        if: ${{ secrets.AZURE_CREDENTIALS == '' }}
-        uses: azure/login@v1
-        with:
-          client-id: ${{ secrets.AZURE_CLIENT_ID }}
-          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-
-      - name: Export ARM env vars for Terraform (service principal with secret)
-        if: ${{ secrets.AZURE_CLIENT_SECRET != '' }}
-        run: |
-          echo "ARM_SUBSCRIPTION_ID=${{ secrets.AZURE_SUBSCRIPTION_ID }}" >> $GITHUB_ENV
-          echo "ARM_TENANT_ID=${{ secrets.AZURE_TENANT_ID }}" >> $GITHUB_ENV
-          echo "ARM_CLIENT_ID=${{ secrets.AZURE_CLIENT_ID }}" >> $GITHUB_ENV
-          echo "ARM_CLIENT_SECRET=${{ secrets.AZURE_CLIENT_SECRET }}" >> $GITHUB_ENV
-
-      - name: Terraform Apply
-        run: |
-          terraform -chdir=${{ env.TERRAFORM_WORKING_DIR }} apply -input=false tfplan
-
-      - name: Configure kubectl for AKS
-        uses: azure/aks-set-context@v2
-        with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
-          cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}
-          resource-group: ${{ secrets.AKS_RESOURCE_GROUP }}
-
-      - name: Setup Helm
-        uses: azure/setup-helm@v3
-
-      - name: Deploy Prometheus via Helm
-        run: |
-          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-          helm repo update
-          kubectl create namespace monitoring --dry-run=client -o yaml | kubectl apply -f -
-          helm upgrade --install prometheus prometheus-community/prometheus \
-            -f ./helm/prometheus-values.yaml \
-            --namespace monitoring
-
-      - name: Deploy Grafana via Helm
-        run: |
-          helm repo add grafana https://grafana.github.io/helm-charts
-          helm repo update
-          helm upgrade --install grafana grafana/grafana \
-            -f ./helm/grafana-values.yaml \
-            --namespace monitoring
-
-  plan-review:
-    name: Manual Plan Review (optional)
-    runs-on: ubuntu-latest
-    needs: terraform-plan
-    if: github.event_name == 'pull_request'
-    steps:
-      - name: Download plan artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: tfplan
-          path: .
-
-      - name: Show plan summary
-        run: |
-          terraform show -no-color tfplan | sed -n '1,200p'
-
-      - name: Upload plan for reviewers
-        uses: actions/upload-artifact@v4
-        with:
-          name: tfplan-for-review
-          path: tfplan
+    - name: Deploy Grafana
+      run: |
+        helm repo add grafana https://grafana.github.io/helm-charts
+        helm install grafana grafana/grafana
