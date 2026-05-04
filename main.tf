@@ -17,18 +17,21 @@ module "spoke1" {
   source   = "./modules/spoke"
   name     = "spoke-east"
   location = var.location
+  rg       = azurerm_resource_group.main.name
 }
 
 module "spoke2" {
   source   = "./modules/spoke"
   name     = "spoke-west"
   location = var.location
+  rg       = azurerm_resource_group.main.name
 }
 
 module "spoke3" {
   source   = "./modules/spoke"
   name     = "spoke-central"
   location = var.location
+  rg       = azurerm_resource_group.main.name
 }
 
 # VNET PEERING
