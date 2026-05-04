@@ -1,8 +1,9 @@
 resource "azurerm_kubernetes_cluster" "aks_private" {
-  name                = var.name
+  count               = var.create_private_cluster ? 1 : 0
+  name                = "${var.name}-private"
   location            = var.location
   resource_group_name = var.rg
-  dns_prefix          = var.name
+  dns_prefix          = "${var.name}-private"
 
   private_cluster_enabled = true
 

@@ -42,7 +42,7 @@ module "vnet_peering" {
   hub_vnet_name       = module.hub.vnet_name
 
   spokes = {
-     spoke1 = {
+    spoke1 = {
       id   = module.spoke1.vnet_id
       name = module.spoke1.vnet_name
     }
@@ -64,6 +64,7 @@ module "network_security" {
   location           = var.location
   firewall_subnet_id = module.hub.firewall_subnet_id
   public_ip_id       = module.hub.public_ip_id
+  hub_vnet_id        = module.hub.vnet_id
 }
 
 # FIREWALL RULES
@@ -76,10 +77,10 @@ module "security" {
 
 # DNS
 module "dns" {
-  source       = "./modules/dns"
-  rg           = azurerm_resource_group.main.name
-  hub_vnet_id  = module.hub.vnet_id
-  location     = var.location
+  source      = "./modules/dns"
+  rg          = azurerm_resource_group.main.name
+  hub_vnet_id = module.hub.vnet_id
+  location    = var.location
 }
 
 # AKS
