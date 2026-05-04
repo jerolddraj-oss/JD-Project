@@ -1,4 +1,4 @@
-# Root Orchestration - Fixed with required module inputs
+# Root Orchestration - Clean & Validated
 
 resource "azurerm_resource_group" "main" {
   name     = "jd-rg"
@@ -34,7 +34,7 @@ module "spoke3" {
   rg       = azurerm_resource_group.main.name
 }
 
-# VNET PEERING
+# VNET PEERING (map(string) only)
 module "vnet_peering" {
   source              = "./modules/vnet-peering"
   resource_group_name = azurerm_resource_group.main.name
@@ -68,10 +68,9 @@ module "security" {
 
 # DNS
 module "dns" {
-  source       = "./modules/dns"
-  rg           = azurerm_resource_group.main.name
-  hub_vnet_id  = module.hub.vnet_id
-  location     = var.location
+  source      = "./modules/dns"
+  rg          = azurerm_resource_group.main.name
+  hub_vnet_id = module.hub.vnet_id
 }
 
 # AKS
