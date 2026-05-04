@@ -35,8 +35,13 @@ jobs:
     - name: Terraform Init
       run: terraform init -upgrade
 
+    # ✅ Auto-format all Terraform files
+    - name: Terraform Format
+      run: terraform fmt -recursive
+
+    # ✅ Then verify formatting
     - name: Terraform Format Check
-      run: terraform fmt -check
+      run: terraform fmt -check -recursive
 
     - name: Terraform Validate
       run: terraform validate
