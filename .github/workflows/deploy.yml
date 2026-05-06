@@ -26,6 +26,7 @@ env:
   ARM_USE_OIDC: true
   TF_VAR_admin_username: azureadmin
   TF_VAR_admin_password: ${{ secrets.TF_VAR_admin_password }}
+  TF_VAR_tenant_id: ${{ secrets.AZURE_TENANT_ID }}
 
 jobs:
 
