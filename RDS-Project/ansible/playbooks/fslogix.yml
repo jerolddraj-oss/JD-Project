@@ -1,0 +1,9 @@
+- name: Configure FSLogix
+  hosts: rds_hosts
+  gather_facts: yes
+
+  tasks:
+    - name: Create FSLogix registry path
+      win_regedit:
+        path: HKLM:\SOFTWARE\FSLogix\Profiles
+        state: present
