@@ -1,0 +1,63 @@
+---
+########################################################
+# Install Session Host Features
+########################################################
+
+- name: Install Session Host Features
+  win_feature:
+    name: "{{ rd_sessionhost_features }}"
+    state: present
+    include_management_tools: true
+  notify:
+    - Restart Session Host
+
+########################################################
+# Enable Remote Desktop
+########################################################
+
+- name: Enable Remote Desktop
+  win_regedit:
+    path: HKLM:\System\CurrentControlSet\Control\Terminal Server
+    name: fDenyTSConnections
+    data: 0
+    type: dword
+
+########################################################
+# Configure Session Limits
+########################################################
+
+- name: Configure Idle Session Limit
+  win_shell: |
+    Import-Module RemoteDesktop
+
+    Set-RDSessionCollectionConfiguration `
+      -CollectionName "{{ session_collection_name }}" `
+      -IdleSessionLimitMin "{{ idle_session_limit_minutes }}"
+  args:
+    executable: powershell.exe
+  ignore_errors: true
+
+########################################################
+# Ensure Remote Desktop Service
+########################################################
+
+- name: Ensure Remote Desktop Service
+  win_service:
+    name: TermService
+    state: started
+    start_mode: auto
+
+########################################################
+# Validate Session Host Installation
+########################################################
+
+- name: Validate Session Host Feature
+  win_shell: |
+    Get-WindowsFeature RDS-RD-Server
+  args:
+    executable: powershell.exe
+  register: sessionhost_feature
+
+- name: Display Session Host Validation
+  debug:
+    var: sessionhost_feature.stdout_lines

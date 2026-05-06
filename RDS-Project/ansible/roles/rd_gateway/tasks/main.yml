@@ -1,0 +1,50 @@
+---
+########################################################
+# Install RD Gateway Features
+########################################################
+
+- name: Install RD Gateway Features
+  win_feature:
+    name: "{{ rd_gateway_features }}"
+    state: present
+    include_management_tools: true
+  notify:
+    - Restart Gateway Server
+
+########################################################
+# Ensure Gateway Service
+########################################################
+
+- name: Ensure TSGateway Service
+  win_service:
+    name: TSGateway
+    state: started
+    start_mode: auto
+
+########################################################
+# Configure Firewall Rules
+########################################################
+
+- name: Configure HTTPS Firewall Rule
+  win_firewall_rule:
+    name: RDGateway-HTTPS
+    localport: 443
+    action: allow
+    direction: in
+    protocol: tcp
+    state: present
+
+########################################################
+# Validate Gateway Installation
+########################################################
+
+- name: Validate Gateway Feature
+  win_shell: |
+    Get-WindowsFeature RDS-Gateway
+  args:
+    executable: powershell.exe
+  register: gateway_feature
+
+- name: Display Gateway Validation
+  debug:
+    var: gateway_feature.stdout_lines

@@ -1,0 +1,37 @@
+---
+########################################################
+# Install RD Gateway
+########################################################
+
+- name: Install RD Gateway Role
+  hosts: rd_gateway
+  gather_facts: true
+
+  tasks:
+
+    ####################################################
+    # Install RD Gateway Features
+    ####################################################
+
+    - name: Install RD Gateway Features
+      win_feature:
+        name: "{{ rd_gateway_features }}"
+        state: present
+        include_management_tools: true
+
+    ####################################################
+    # Verify RD Gateway Service
+    ####################################################
+
+    - name: Verify TSGateway Service
+      win_service:
+        name: TSGateway
+        state: started
+
+    ####################################################
+    # Display Completion Message
+    ####################################################
+
+    - name: Display Gateway Completion
+      debug:
+        msg: "RD Gateway installation completed successfully."

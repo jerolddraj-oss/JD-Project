@@ -1,0 +1,29 @@
+---
+########################################################
+# Configure RDS Certificates
+########################################################
+
+- name: Configure RDS Certificates
+  hosts: rd_gateway
+  gather_facts: true
+
+  tasks:
+
+    ####################################################
+    # Import Certificate Placeholder
+    ####################################################
+
+    - name: Certificate Import Placeholder
+      debug:
+        msg: >
+          Import enterprise SSL certificate here for RD Gateway HTTPS access.
+
+    ####################################################
+    # Example PowerShell Import
+    ####################################################
+
+    - name: Example Certificate Import Command
+      debug:
+        msg: >
+          Import-PfxCertificate -FilePath C:\certs\gateway.pfx
+          -CertStoreLocation Cert:\LocalMachine\My

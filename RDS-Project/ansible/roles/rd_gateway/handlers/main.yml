@@ -1,0 +1,8 @@
+---
+########################################################
+# Restart Gateway Server
+########################################################
+
+- name: Restart Gateway Server
+  win_reboot:
+    reboot_timeout: 1800

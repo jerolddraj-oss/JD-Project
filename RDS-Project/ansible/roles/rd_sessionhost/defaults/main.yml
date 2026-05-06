@@ -1,0 +1,8 @@
+---
+########################################################
+# RD Session Host Default Variables
+########################################################
+
+idle_session_limit_minutes: 30
+
+disconnected_session_limit_minutes: 60

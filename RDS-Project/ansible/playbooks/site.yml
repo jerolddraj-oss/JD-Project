@@ -1,0 +1,168 @@
+---
+########################################################
+# Windows Baseline Configuration
+########################################################
+
+- name: Configure Windows Baseline
+  hosts: windows_servers
+  gather_facts: true
+
+  tasks:
+
+    ####################################################
+    # Set Timezone
+    ####################################################
+
+    - name: Configure Windows Timezone
+      win_timezone:
+        timezone: "{{ windows_timezone }}"
+
+    ####################################################
+    # Disable IE ESC
+    ####################################################
+
+    - name: Disable IE Enhanced Security
+      win_regedit:
+        path: HKLM:\SOFTWARE\Microsoft\Active Setup\Installed Components
+        name: IsInstalled
+        data: 0
+        type: dword
+      when: disable_ie_esc
+
+    ####################################################
+    # Install Common Features
+    ####################################################
+
+    - name: Install Common Windows Features
+      win_feature:
+        name: "{{ common_windows_features }}"
+        state: present
+        include_management_tools: true
+
+########################################################
+# RD Gateway Deployment
+########################################################
+
+- name: Deploy RD Gateway
+  hosts: rd_gateway
+  gather_facts: true
+
+  roles:
+    - rd_gateway
+
+########################################################
+# RD Broker Deployment
+########################################################
+
+- name: Deploy RD Broker
+  hosts: rd_broker
+  gather_facts: true
+
+  roles:
+    - rd_broker
+
+########################################################
+# RD Session Host Deployment
+########################################################
+
+- name: Deploy RD Session Hosts
+  hosts: rd_session_hosts
+  gather_facts: true
+
+  roles:
+    - rd_sessionhost
+
+########################################################
+# Configure RDS Deployment
+########################################################
+
+- name: Configure RDS Deployment
+  hosts: rd_broker
+  gather_facts: true
+
+  tasks:
+
+    ####################################################
+    # Create RDS Deployment
+    ####################################################
+
+    - name: Create RDS Deployment
+      win_shell: |
+        Import-Module RemoteDesktop
+
+        New-RDSessionDeployment `
+          -ConnectionBroker "{{ broker_name }}" `
+          -WebAccessServer "{{ broker_name }}" `
+          -SessionHost @(
+            {% for host in groups['rd_session_hosts'] %}
+            "{{ host }}"{% if not loop.last %},{% endif %}
+            {% endfor %}
+          )
+      args:
+        executable: powershell.exe
+
+    ####################################################
+    # Create Session Collection
+    ####################################################
+
+    - name: Create Session Collection
+      win_shell: |
+        Import-Module RemoteDesktop
+
+        New-RDSessionCollection `
+          -CollectionName "{{ rds_collection_name }}" `
+          -SessionHost @(
+            {% for host in groups['rd_session_hosts'] %}
+            "{{ host }}"{% if not loop.last %},{% endif %}
+            {% endfor %}
+          ) `
+          -ConnectionBroker "{{ broker_name }}"
+      args:
+        executable: powershell.exe
+
+########################################################
+# Certificate Configuration
+########################################################
+
+- name: Configure Certificates
+  hosts: rd_gateway
+  gather_facts: true
+
+  tasks:
+
+    ####################################################
+    # Placeholder Certificate Task
+    ####################################################
+
+    - name: Display Certificate Placeholder
+      debug:
+        msg: "Certificate deployment will be configured in certificate-config.yml"
+
+########################################################
+# Post Deployment Validation
+########################################################
+
+- name: Validate RDS Deployment
+  hosts: rd_broker
+  gather_facts: true
+
+  tasks:
+
+    ####################################################
+    # Validate RDS Services
+    ####################################################
+
+    - name: Verify RDS Deployment
+      win_shell: |
+        Get-RDServer
+      args:
+        executable: powershell.exe
+      register: rds_validation
+
+    ####################################################
+    # Display Validation Results
+    ####################################################
+
+    - name: Display RDS Validation Output
+      debug:
+        var: rds_validation.stdout_lines

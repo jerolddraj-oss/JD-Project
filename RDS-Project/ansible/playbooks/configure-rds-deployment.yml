@@ -1,0 +1,56 @@
+---
+########################################################
+# Configure RDS Deployment
+########################################################
+
+- name: Configure RDS Deployment
+  hosts: rd_broker
+  gather_facts: true
+
+  tasks:
+
+    ####################################################
+    # Create RDS Deployment
+    ####################################################
+
+    - name: Create Session Deployment
+      win_shell: |
+        Import-Module RemoteDesktop
+
+        New-RDSessionDeployment `
+          -ConnectionBroker "{{ broker_name }}" `
+          -WebAccessServer "{{ broker_name }}" `
+          -SessionHost @(
+            {% for host in groups['rd_session_hosts'] %}
+            "{{ host }}"{% if not loop.last %},{% endif %}
+            {% endfor %}
+          )
+      args:
+        executable: powershell.exe
+
+    ####################################################
+    # Create Collection
+    ####################################################
+
+    - name: Create Session Collection
+      win_shell: |
+        Import-Module RemoteDesktop
+
+        New-RDSessionCollection `
+          -CollectionName "{{ rds_collection_name }}" `
+          -SessionHost @(
+            {% for host in groups['rd_session_hosts'] %}
+            "{{ host }}"{% if not loop.last %},{% endif %}
+            {% endfor %}
+          ) `
+          -ConnectionBroker "{{ broker_name }}"
+      args:
+        executable: powershell.exe
+
+    ####################################################
+    # Display Completion Message
+    ####################################################
+
+    - name: Display Configuration Completion
+      debug:
+        msg: "RDS deployment configured successfully."

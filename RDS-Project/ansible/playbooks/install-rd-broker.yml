@@ -1,0 +1,37 @@
+---
+########################################################
+# Install RD Broker
+########################################################
+
+- name: Install RD Broker Role
+  hosts: rd_broker
+  gather_facts: true
+
+  tasks:
+
+    ####################################################
+    # Install RD Broker Features
+    ####################################################
+
+    - name: Install RD Broker Features
+      win_feature:
+        name: "{{ rd_broker_features }}"
+        state: present
+        include_management_tools: true
+
+    ####################################################
+    # Verify Broker Service
+    ####################################################
+
+    - name: Verify Tssdis Service
+      win_service:
+        name: Tssdis
+        state: started
+
+    ####################################################
+    # Display Completion Message
+    ####################################################
+
+    - name: Display Broker Completion
+      debug:
+        msg: "RD Broker installation completed successfully."

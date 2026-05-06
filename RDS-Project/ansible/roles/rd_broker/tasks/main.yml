@@ -1,0 +1,52 @@
+---
+########################################################
+# Install RD Broker Features
+########################################################
+
+- name: Install RD Broker Features
+  win_feature:
+    name: "{{ rd_broker_features }}"
+    state: present
+    include_management_tools: true
+  notify:
+    - Restart Broker Server
+
+########################################################
+# Ensure Broker Service
+########################################################
+
+- name: Ensure Tssdis Service
+  win_service:
+    name: Tssdis
+    state: started
+    start_mode: auto
+
+########################################################
+# Configure Licensing Mode
+########################################################
+
+- name: Configure Licensing Mode
+  win_shell: |
+    Import-Module RemoteDesktopServices
+
+    Set-ItemProperty `
+      -Path "HKLM:\SYSTEM\CurrentControlSet\Control\Terminal Server\RCM\Licensing Core" `
+      -Name LicensingMode `
+      -Value 4
+  args:
+    executable: powershell.exe
+
+########################################################
+# Validate Broker Installation
+########################################################
+
+- name: Validate Broker Feature
+  win_shell: |
+    Get-WindowsFeature RDS-Connection-Broker
+  args:
+    executable: powershell.exe
+  register: broker_feature
+
+- name: Display Broker Validation
+  debug:
+    var: broker_feature.stdout_lines

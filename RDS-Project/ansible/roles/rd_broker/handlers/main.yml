@@ -1,0 +1,8 @@
+---
+########################################################
+# Restart Broker Server
+########################################################
+
+- name: Restart Broker Server
+  win_reboot:
+    reboot_timeout: 1800
