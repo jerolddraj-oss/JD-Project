@@ -1,12 +1,4 @@
-########################################################
-# Azure RDS Deployment Pipeline
-########################################################
-
 name: Azure-RDS-Deployment
-
-########################################################
-# Trigger Configuration
-########################################################
 
 on:
   push:
@@ -19,30 +11,14 @@ on:
 
   workflow_dispatch:
 
-########################################################
-# Required Permissions for OIDC
-########################################################
-
 permissions:
   id-token: write
   contents: read
 
-########################################################
-# Environment Variables
-########################################################
-
 env:
-  TF_VERSION: 1.8.5
-
-########################################################
-# Jobs
-########################################################
+  TF_VERSION: "1.8.5"
 
 jobs:
-
-  ######################################################
-  # Terraform Validation
-  ######################################################
 
   terraform-validation:
 
@@ -52,14 +28,14 @@ jobs:
     steps:
 
       ##################################################
-      # Checkout Repository
+      # Checkout
       ##################################################
 
       - name: Checkout Repository
         uses: actions/checkout@v4
 
       ##################################################
-      # Azure Login using OIDC
+      # Azure Login (OIDC)
       ##################################################
 
       - name: Azure Login
@@ -79,31 +55,18 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
 
       ##################################################
-      # Configure Terraform Plugin Cache
+      # Create Terraform Plugin Cache
       ##################################################
 
-      - name: Configure Terraform Plugin Cache
+      - name: Create Terraform Plugin Cache
         run: |
-          mkdir -p $HOME/.terraform.d/plugin-cache
-          echo "TF_PLUGIN_CACHE_DIR=$HOME/.terraform.d/plugin-cache" >> $GITHUB_ENV
+          mkdir -p "$HOME/.terraform.d/plugin-cache"
 
       ##################################################
-      # Cache Terraform Providers
+      # Terraform Format
       ##################################################
 
-      - name: Cache Terraform Providers
-        uses: actions/cache@v4
-        with:
-          path: ~/.terraform.d/plugin-cache
-          key: terraform-${{ runner.os }}-${{ hashFiles('**/.terraform.lock.hcl') }}
-          restore-keys: |
-            terraform-${{ runner.os }}-
-
-      ##################################################
-      # Terraform Format Check
-      ##################################################
-
-      - name: Terraform Format Check
+      - name: Terraform Format
         working-directory: RDS-Project/terraform
         run: terraform fmt -recursive
 
@@ -113,7 +76,11 @@ jobs:
 
       - name: Terraform Init
         working-directory: RDS-Project/terraform/environments/poc
-        run: terraform init
+        env:
+          TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
+        run: |
+          mkdir -p $TF_PLUGIN_CACHE_DIR
+          terraform init
 
       ##################################################
       # Terraform Validate
@@ -121,11 +88,9 @@ jobs:
 
       - name: Terraform Validate
         working-directory: RDS-Project/terraform/environments/poc
+        env:
+          TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
         run: terraform validate
-
-  ######################################################
-  # Terraform Plan
-  ######################################################
 
   terraform-plan:
 
@@ -136,11 +101,15 @@ jobs:
 
     steps:
 
+      ##################################################
+      # Checkout
+      ##################################################
+
       - name: Checkout Repository
         uses: actions/checkout@v4
 
       ##################################################
-      # Azure Login using OIDC
+      # Azure Login
       ##################################################
 
       - name: Azure Login
@@ -160,21 +129,16 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
 
       ##################################################
-      # Configure Terraform Plugin Cache
-      ##################################################
-
-      - name: Configure Terraform Plugin Cache
-        run: |
-          mkdir -p $HOME/.terraform.d/plugin-cache
-          echo "TF_PLUGIN_CACHE_DIR=$HOME/.terraform.d/plugin-cache" >> $GITHUB_ENV
-
-      ##################################################
       # Terraform Init
       ##################################################
 
       - name: Terraform Init
         working-directory: RDS-Project/terraform/environments/poc
-        run: terraform init
+        env:
+          TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
+        run: |
+          mkdir -p $TF_PLUGIN_CACHE_DIR
+          terraform init
 
       ##################################################
       # Terraform Plan
@@ -182,10 +146,12 @@ jobs:
 
       - name: Terraform Plan
         working-directory: RDS-Project/terraform/environments/poc
+        env:
+          TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
         run: terraform plan -out=tfplan
 
       ##################################################
-      # Upload Terraform Plan
+      # Upload Plan
       ##################################################
 
       - name: Upload Terraform Plan
@@ -193,10 +159,6 @@ jobs:
         with:
           name: terraform-plan
           path: RDS-Project/terraform/environments/poc/tfplan
-
-  ######################################################
-  # Terraform Apply
-  ######################################################
 
   terraform-apply:
 
@@ -209,11 +171,15 @@ jobs:
 
     steps:
 
+      ##################################################
+      # Checkout
+      ##################################################
+
       - name: Checkout Repository
         uses: actions/checkout@v4
 
       ##################################################
-      # Azure Login using OIDC
+      # Azure Login
       ##################################################
 
       - name: Azure Login
@@ -233,21 +199,16 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
 
       ##################################################
-      # Configure Terraform Plugin Cache
-      ##################################################
-
-      - name: Configure Terraform Plugin Cache
-        run: |
-          mkdir -p $HOME/.terraform.d/plugin-cache
-          echo "TF_PLUGIN_CACHE_DIR=$HOME/.terraform.d/plugin-cache" >> $GITHUB_ENV
-
-      ##################################################
       # Terraform Init
       ##################################################
 
       - name: Terraform Init
         working-directory: RDS-Project/terraform/environments/poc
-        run: terraform init
+        env:
+          TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
+        run: |
+          mkdir -p $TF_PLUGIN_CACHE_DIR
+          terraform init
 
       ##################################################
       # Terraform Apply
@@ -255,43 +216,6 @@ jobs:
 
       - name: Terraform Apply
         working-directory: RDS-Project/terraform/environments/poc
+        env:
+          TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
         run: terraform apply -auto-approve
-
-  ######################################################
-  # Ansible Deployment
-  ######################################################
-
-  ansible-deployment:
-
-    name: Ansible Deployment
-    runs-on: ubuntu-latest
-
-    needs: terraform-apply
-
-    steps:
-
-      ##################################################
-      # Checkout Repository
-      ##################################################
-
-      - name: Checkout Repository
-        uses: actions/checkout@v4
-
-      ##################################################
-      # Install Ansible
-      ##################################################
-
-      - name: Install Ansible
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ansible
-          pip install pywinrm requests requests-ntlm
-
-      ##################################################
-      # Execute Main Playbook
-      ##################################################
-
-      - name: Execute Ansible Playbook
-        working-directory: RDS-Project/ansible
-        run: |
-          ansible-playbook playbooks/site.yml
