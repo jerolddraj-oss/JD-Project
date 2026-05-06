@@ -29,7 +29,7 @@ resource "azurerm_network_security_group" "sessionhost_nsg" {
 }
 
 ###################################################
-# RDP Rule - Management
+# Allow RDP Access
 ###################################################
 
 resource "azurerm_network_security_rule" "allow_rdp_management" {
@@ -50,18 +50,35 @@ resource "azurerm_network_security_rule" "allow_rdp_management" {
 }
 
 ###################################################
-# WinRM Rule
+# Allow WinRM
 ###################################################
 
-resource "azurerm_network_security_rule" "allow_winrm" {
-  name                        = "Allow-WinRM"
+resource "azurerm_network_security_rule" "allow_winrm_http" {
+  name                        = "Allow-WinRM-HTTP"
   priority                    = 110
   direction                   = "Inbound"
   access                      = "Allow"
   protocol                    = "Tcp"
 
   source_port_range           = "*"
-  destination_port_ranges     = ["5985", "5986"]
+  destination_port_range      = "5985"
+
+  source_address_prefix       = var.allowed_management_ip
+  destination_address_prefix  = "*"
+
+  resource_group_name         = var.resource_group_name
+  network_security_group_name = azurerm_network_security_group.management_nsg.name
+}
+
+resource "azurerm_network_security_rule" "allow_winrm_https" {
+  name                        = "Allow-WinRM-HTTPS"
+  priority                    = 111
+  direction                   = "Inbound"
+  access                      = "Allow"
+  protocol                    = "Tcp"
+
+  source_port_range           = "*"
+  destination_port_range      = "5986"
 
   source_address_prefix       = var.allowed_management_ip
   destination_address_prefix  = "*"
@@ -71,7 +88,7 @@ resource "azurerm_network_security_rule" "allow_winrm" {
 }
 
 ###################################################
-# HTTPS Rule
+# Allow HTTPS
 ###################################################
 
 resource "azurerm_network_security_rule" "allow_https" {
@@ -92,7 +109,7 @@ resource "azurerm_network_security_rule" "allow_https" {
 }
 
 ###################################################
-# Session Host Internal Communication
+# Internal RDS Communication
 ###################################################
 
 resource "azurerm_network_security_rule" "allow_internal_sessionhost" {
@@ -113,7 +130,7 @@ resource "azurerm_network_security_rule" "allow_internal_sessionhost" {
 }
 
 ###################################################
-# Associate NSG with Management Subnet
+# Associate Management NSG
 ###################################################
 
 resource "azurerm_subnet_network_security_group_association" "management_assoc" {
@@ -122,7 +139,7 @@ resource "azurerm_subnet_network_security_group_association" "management_assoc" 
 }
 
 ###################################################
-# Associate NSG with Session Host Subnet
+# Associate Session Host NSG
 ###################################################
 
 resource "azurerm_subnet_network_security_group_association" "sessionhost_assoc" {
