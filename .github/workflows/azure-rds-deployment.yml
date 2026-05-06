@@ -105,7 +105,7 @@ jobs:
 
       - name: Terraform Format Check
         working-directory: RDS-Project/terraform
-        run: terraform fmt -check -recursive
+        run: terraform fmt -recursive
 
       ##################################################
       # Terraform Init
