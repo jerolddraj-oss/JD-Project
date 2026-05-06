@@ -1,0 +1,10 @@
+- name: Configure RDS Host
+  hosts: rds_hosts
+  gather_facts: yes
+
+  tasks:
+    - name: Install RDS Session Host
+      win_feature:
+        name: RDS-RD-Server
+        state: present
+        include_management_tools: yes
