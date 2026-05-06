@@ -20,6 +20,10 @@ env:
 
 jobs:
 
+  ##################################################
+  # Terraform Validation
+  ##################################################
+
   terraform-validation:
 
     name: Terraform Validation
@@ -28,14 +32,14 @@ jobs:
     steps:
 
       ##################################################
-      # Checkout
+      # Checkout Repository
       ##################################################
 
       - name: Checkout Repository
         uses: actions/checkout@v4
 
       ##################################################
-      # Azure Login (OIDC)
+      # Azure Login using OIDC
       ##################################################
 
       - name: Azure Login
@@ -60,7 +64,7 @@ jobs:
 
       - name: Create Terraform Plugin Cache
         run: |
-          mkdir -p "$HOME/.terraform.d/plugin-cache"
+          mkdir -p /tmp/terraform-plugin-cache
 
       ##################################################
       # Terraform Format
@@ -68,6 +72,8 @@ jobs:
 
       - name: Terraform Format
         working-directory: RDS-Project/terraform
+        env:
+          TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
         run: terraform fmt -recursive
 
       ##################################################
@@ -77,10 +83,8 @@ jobs:
       - name: Terraform Init
         working-directory: RDS-Project/terraform/environments/poc
         env:
-          TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
-        run: |
-          mkdir -p $TF_PLUGIN_CACHE_DIR
-          terraform init
+          TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
+        run: terraform init
 
       ##################################################
       # Terraform Validate
@@ -89,8 +93,12 @@ jobs:
       - name: Terraform Validate
         working-directory: RDS-Project/terraform/environments/poc
         env:
-          TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
+          TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
         run: terraform validate
+
+  ##################################################
+  # Terraform Plan
+  ##################################################
 
   terraform-plan:
 
@@ -102,14 +110,14 @@ jobs:
     steps:
 
       ##################################################
-      # Checkout
+      # Checkout Repository
       ##################################################
 
       - name: Checkout Repository
         uses: actions/checkout@v4
 
       ##################################################
-      # Azure Login
+      # Azure Login using OIDC
       ##################################################
 
       - name: Azure Login
@@ -129,16 +137,22 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
 
       ##################################################
+      # Create Terraform Plugin Cache
+      ##################################################
+
+      - name: Create Terraform Plugin Cache
+        run: |
+          mkdir -p /tmp/terraform-plugin-cache
+
+      ##################################################
       # Terraform Init
       ##################################################
 
       - name: Terraform Init
         working-directory: RDS-Project/terraform/environments/poc
         env:
-          TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
-        run: |
-          mkdir -p $TF_PLUGIN_CACHE_DIR
-          terraform init
+          TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
+        run: terraform init
 
       ##################################################
       # Terraform Plan
@@ -147,11 +161,11 @@ jobs:
       - name: Terraform Plan
         working-directory: RDS-Project/terraform/environments/poc
         env:
-          TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
+          TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
         run: terraform plan -out=tfplan
 
       ##################################################
-      # Upload Plan
+      # Upload Terraform Plan
       ##################################################
 
       - name: Upload Terraform Plan
@@ -159,6 +173,10 @@ jobs:
         with:
           name: terraform-plan
           path: RDS-Project/terraform/environments/poc/tfplan
+
+  ##################################################
+  # Terraform Apply
+  ##################################################
 
   terraform-apply:
 
@@ -172,14 +190,14 @@ jobs:
     steps:
 
       ##################################################
-      # Checkout
+      # Checkout Repository
       ##################################################
 
       - name: Checkout Repository
         uses: actions/checkout@v4
 
       ##################################################
-      # Azure Login
+      # Azure Login using OIDC
       ##################################################
 
       - name: Azure Login
@@ -199,16 +217,22 @@ jobs:
           terraform_version: ${{ env.TF_VERSION }}
 
       ##################################################
+      # Create Terraform Plugin Cache
+      ##################################################
+
+      - name: Create Terraform Plugin Cache
+        run: |
+          mkdir -p /tmp/terraform-plugin-cache
+
+      ##################################################
       # Terraform Init
       ##################################################
 
       - name: Terraform Init
         working-directory: RDS-Project/terraform/environments/poc
         env:
-          TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
-        run: |
-          mkdir -p $TF_PLUGIN_CACHE_DIR
-          terraform init
+          TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
+        run: terraform init
 
       ##################################################
       # Terraform Apply
@@ -217,5 +241,5 @@ jobs:
       - name: Terraform Apply
         working-directory: RDS-Project/terraform/environments/poc
         env:
-          TF_PLUGIN_CACHE_DIR: ${{ github.workspace }}/.terraform.d/plugin-cache
+          TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
         run: terraform apply -auto-approve
