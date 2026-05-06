@@ -4,11 +4,9 @@ on:
   push:
     branches:
       - main
-
   pull_request:
     branches:
       - main
-
   workflow_dispatch:
 
 permissions:
@@ -23,62 +21,34 @@ jobs:
   ##################################################
   # Terraform Validation
   ##################################################
-
   terraform-validation:
-
     name: Terraform Validation
     runs-on: ubuntu-latest
 
     steps:
-
-      ##################################################
-      # Checkout Repository
-      ##################################################
-
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      ##################################################
-      # Azure Login using OIDC
-      ##################################################
-
-      - name: Azure Login
+      - name: Azure Login using OIDC
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      ##################################################
-      # Setup Terraform
-      ##################################################
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
-      ##################################################
-      # Create Terraform Plugin Cache
-      ##################################################
-
       - name: Create Terraform Plugin Cache
-        run: |
-          mkdir -p /tmp/terraform-plugin-cache
-
-      ##################################################
-      # Terraform Format
-      ##################################################
+        run: mkdir -p /tmp/terraform-plugin-cache
 
       - name: Terraform Format
         working-directory: RDS-Project/terraform
         env:
           TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
         run: terraform fmt -recursive
-
-      ##################################################
-      # Terraform Init
-      ##################################################
 
       - name: Terraform Init
         working-directory: RDS-Project/terraform/environments/poc
@@ -89,10 +59,6 @@ jobs:
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: terraform init
-
-      ##################################################
-      # Terraform Validate
-      ##################################################
 
       - name: Terraform Validate
         working-directory: RDS-Project/terraform/environments/poc
@@ -107,54 +73,29 @@ jobs:
   ##################################################
   # Terraform Plan
   ##################################################
-
   terraform-plan:
-
     name: Terraform Plan
     runs-on: ubuntu-latest
-
     needs: terraform-validation
 
     steps:
-
-      ##################################################
-      # Checkout Repository
-      ##################################################
-
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      ##################################################
-      # Azure Login using OIDC
-      ##################################################
-
-      - name: Azure Login
+      - name: Azure Login using OIDC
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      ##################################################
-      # Setup Terraform
-      ##################################################
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
-      ##################################################
-      # Create Terraform Plugin Cache
-      ##################################################
-
       - name: Create Terraform Plugin Cache
-        run: |
-          mkdir -p /tmp/terraform-plugin-cache
-
-      ##################################################
-      # Terraform Init
-      ##################################################
+        run: mkdir -p /tmp/terraform-plugin-cache
 
       - name: Terraform Init
         working-directory: RDS-Project/terraform/environments/poc
@@ -165,10 +106,6 @@ jobs:
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: terraform init
-
-      ##################################################
-      # Terraform Plan
-      ##################################################
 
       - name: Terraform Plan
         working-directory: RDS-Project/terraform/environments/poc
@@ -180,10 +117,6 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: terraform plan -out=tfplan
 
-      ##################################################
-      # Upload Terraform Plan
-      ##################################################
-
       - name: Upload Terraform Plan
         uses: actions/upload-artifact@v4
         with:
@@ -193,56 +126,30 @@ jobs:
   ##################################################
   # Terraform Apply
   ##################################################
-
   terraform-apply:
-
     name: Terraform Apply
     runs-on: ubuntu-latest
-
     needs: terraform-plan
-
     if: github.ref == 'refs/heads/main'
 
     steps:
-
-      ##################################################
-      # Checkout Repository
-      ##################################################
-
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      ##################################################
-      # Azure Login using OIDC
-      ##################################################
-
-      - name: Azure Login
+      - name: Azure Login using OIDC
         uses: azure/login@v2
         with:
           client-id: ${{ secrets.AZURE_CLIENT_ID }}
           tenant-id: ${{ secrets.AZURE_TENANT_ID }}
           subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      ##################################################
-      # Setup Terraform
-      ##################################################
-
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
-      ##################################################
-      # Create Terraform Plugin Cache
-      ##################################################
-
       - name: Create Terraform Plugin Cache
-        run: |
-          mkdir -p /tmp/terraform-plugin-cache
-
-      ##################################################
-      # Terraform Init
-      ##################################################
+        run: mkdir -p /tmp/terraform-plugin-cache
 
       - name: Terraform Init
         working-directory: RDS-Project/terraform/environments/poc
@@ -254,9 +161,11 @@ jobs:
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: terraform init
 
-      ##################################################
-      # Terraform Apply
-      ##################################################
+      - name: Download Terraform Plan
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-plan
+          path: RDS-Project/terraform/environments/poc
 
       - name: Terraform Apply
         working-directory: RDS-Project/terraform/environments/poc
@@ -266,4 +175,4 @@ jobs:
           ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
           ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
           ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
-        run: terraform apply -auto-approve
+        run: terraform apply -auto-approve tfplan
