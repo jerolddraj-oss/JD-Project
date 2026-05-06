@@ -1,4 +1,4 @@
-###################################################
+  ###################################################
 # Availability Set
 ###################################################
 
@@ -75,7 +75,8 @@ resource "azurerm_network_interface" "sessionhost_nic" {
   ip_configuration {
     name                          = "internal"
     subnet_id                     = var.sessionhost_subnet_id
-    private_ip_address_allocation = "Dynamic"
+    private_ip_address_allocation = "Static"
+    private_ip_address            = var.rd_gateway_private_ip
   }
 
   tags = {
