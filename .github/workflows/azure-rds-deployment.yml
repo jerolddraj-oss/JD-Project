@@ -84,6 +84,10 @@ jobs:
         working-directory: RDS-Project/terraform/environments/poc
         env:
           TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
+          ARM_USE_OIDC: true
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: terraform init
 
       ##################################################
@@ -94,6 +98,10 @@ jobs:
         working-directory: RDS-Project/terraform/environments/poc
         env:
           TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
+          ARM_USE_OIDC: true
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: terraform validate
 
   ##################################################
@@ -152,6 +160,10 @@ jobs:
         working-directory: RDS-Project/terraform/environments/poc
         env:
           TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
+          ARM_USE_OIDC: true
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: terraform init
 
       ##################################################
@@ -162,6 +174,10 @@ jobs:
         working-directory: RDS-Project/terraform/environments/poc
         env:
           TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
+          ARM_USE_OIDC: true
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: terraform plan -out=tfplan
 
       ##################################################
@@ -232,6 +248,10 @@ jobs:
         working-directory: RDS-Project/terraform/environments/poc
         env:
           TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
+          ARM_USE_OIDC: true
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: terraform init
 
       ##################################################
@@ -242,4 +262,8 @@ jobs:
         working-directory: RDS-Project/terraform/environments/poc
         env:
           TF_PLUGIN_CACHE_DIR: /tmp/terraform-plugin-cache
+          ARM_USE_OIDC: true
+          ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
         run: terraform apply -auto-approve
