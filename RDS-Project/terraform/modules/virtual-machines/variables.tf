@@ -90,20 +90,3 @@ variable "rd_broker_private_ip" {
   description = "RD Broker Static Private IP"
   type        = string
 }
-###################################################
-# RD Gateway Private IP
-###################################################
-
-variable "rd_gateway_private_ip" {
-  description = "Static private IP for RD Gateway VM"
-  type        = string
-}
-
-###################################################
-# RD Broker Private IP
-###################################################
-
-variable "rd_broker_private_ip" {
-  description = "Static private IP for RD Broker VM"
-  type        = string
-}
